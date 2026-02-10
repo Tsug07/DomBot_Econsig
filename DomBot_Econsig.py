@@ -13,6 +13,7 @@ import traceback
 import threading
 from typing import Optional, Tuple
 import tkinter.messagebox as messagebox
+from PIL import Image, ImageDraw
 
 
 # Handler de log separado da classe principal
@@ -129,7 +130,7 @@ class AutomacaoGUI:
     def set_window_icon(self):
         """Configura o ícone da janela"""
         try:
-            icon_path = os.path.join(os.path.dirname(__file__), "assets", "bot-folha-de-pagamento.ico")
+            icon_path = os.path.join(os.path.dirname(__file__), "assets", "favicon.ico")
             if os.name == 'nt' and os.path.exists(icon_path):
                 self.window.iconbitmap(icon_path)
         except Exception as e:
@@ -163,18 +164,33 @@ class AutomacaoGUI:
         header_frame.grid(row=0, column=0, sticky="ew", pady=(0, 6))
         header_frame.grid_columnconfigure(1, weight=1)
 
-        # Ícone/Logo
-        logo_frame = ctk.CTkFrame(header_frame, fg_color=self.CORES['destaque'],
-                                   width=36, height=36, corner_radius=8)
-        logo_frame.grid(row=0, column=0, padx=10, pady=8)
-        logo_frame.grid_propagate(False)
-
-        ctk.CTkLabel(logo_frame, text="🤖", font=("Segoe UI Emoji", 16)).place(relx=0.5, rely=0.5, anchor="center")
+        # Ícone/Logo com fundo branco circular
+        logo_path = os.path.join(os.path.dirname(__file__), "assets", "DomBot_New.png")
+        if os.path.exists(logo_path):
+            size = 66
+            circle_size = 44
+            bg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+            circle_mask = Image.new("L", (circle_size, circle_size), 0)
+            ImageDraw.Draw(circle_mask).ellipse((0, 0, circle_size - 1, circle_size - 1), fill=255)
+            circle = Image.new("RGBA", (circle_size, circle_size), (255, 255, 255, 255))
+            circle_offset = (size - circle_size) // 2
+            bg.paste(circle, (circle_offset, circle_offset), circle_mask)
+            original = Image.open(logo_path).convert("RGBA")
+            original = original.resize((size, size), Image.LANCZOS)
+            bg.paste(original, (0, 0), original)
+            logo_image = ctk.CTkImage(light_image=bg, dark_image=bg, size=(size, size))
+            ctk.CTkLabel(header_frame, image=logo_image, text="").grid(row=0, column=0, padx=10, pady=8)
+        else:
+            logo_frame = ctk.CTkFrame(header_frame, fg_color=self.CORES['destaque'],
+                                       width=44, height=44, corner_radius=22)
+            logo_frame.grid(row=0, column=0, padx=10, pady=8)
+            logo_frame.grid_propagate(False)
+            ctk.CTkLabel(logo_frame, text="🤖", font=("Segoe UI Emoji", 18)).place(relx=0.5, rely=0.5, anchor="center")
 
         # Título
         ctk.CTkLabel(
             header_frame,
-            text="DomBot - Empréstimo Consignado",
+            text="DomBot - Econseg",
             font=ctk.CTkFont(size=16, weight="bold"),
             text_color=self.CORES['texto']
         ).grid(row=0, column=1, sticky="w", padx=5)
