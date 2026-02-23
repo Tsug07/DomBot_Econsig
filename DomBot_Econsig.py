@@ -9,11 +9,27 @@ import time
 import logging
 from datetime import datetime
 import os
+import re
+import unicodedata
 import traceback
 import threading
 from typing import Optional, Tuple
 import tkinter.messagebox as messagebox
 from PIL import Image, ImageDraw
+
+
+def sanitizar_nome_arquivo(nome: str) -> str:
+    """Remove caracteres inválidos para nomes de arquivo no Windows."""
+    # Normalizar acentos (ex: é -> e)
+    nome = unicodedata.normalize('NFKD', nome).encode('ascii', 'ignore').decode('ascii')
+    # Remover caracteres proibidos no Windows: \ / : * ? " < > |
+    nome = re.sub(r'[\\/:*?"<>|]', '', nome)
+    # Remover espaços extras
+    nome = nome.strip()
+    # Limitar tamanho para evitar problemas com caminhos longos
+    if len(nome) > 200:
+        nome = nome[:200]
+    return nome
 
 
 # Handler de log separado da classe principal
@@ -1341,7 +1357,7 @@ class DominioAutomation:
                 return False
 
             # Definir nome do documento
-            nome_pdf = str(row['Salvar Como'])
+            nome_pdf = sanitizar_nome_arquivo(str(row['Salvar Como']))
             self.log(f"Definindo nome da publicação: {nome_pdf}")
             edit_field = pub_doc_window.child_window(auto_id="1014", class_name="Edit")
             edit_field.set_text(nome_pdf)
@@ -1443,7 +1459,7 @@ class DominioAutomation:
                 send_keys('{TAB}{TAB}{TAB}{TAB}{TAB}')
                 time.sleep(0.3)
 
-                nome_pdf = str(row['Salvar Como'])
+                nome_pdf = sanitizar_nome_arquivo(str(row['Salvar Como']))
                 self.log(f"Nome do arquivo: {nome_pdf}")
 
                 # Definir nome do arquivo
